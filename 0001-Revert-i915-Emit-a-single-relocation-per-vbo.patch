@@ -1,0 +1,171 @@
+From 0a9a13f3476d6ae43d789532abd7c6f5107f5b51 Mon Sep 17 00:00:00 2001
+From: Ander Conselvan de Oliveira <ander.conselvan.de.oliveira@intel.com>
+Date: Thu, 30 Jun 2011 13:53:23 +0300
+Subject: [PATCH 1/2] Revert "i915: Emit a single relocation per vbo"
+
+This commit was causing visual artifacts when running meego-ux-daemon
+on the WeTab.
+
+This reverts commit 2c6793fb6bc89df16c23f727bcb072a157ab8d10.
+---
+ src/mesa/drivers/dri/i915/i915_context.h  |   10 +------
+ src/mesa/drivers/dri/i915/i915_fragprog.c |    4 ---
+ src/mesa/drivers/dri/i915/i915_reg.h      |    7 +++++
+ src/mesa/drivers/dri/i915/i915_vtbl.c     |    3 --
+ src/mesa/drivers/dri/i915/intel_tris.c    |   40 +++++++---------------------
+ 5 files changed, 18 insertions(+), 46 deletions(-)
+
+diff --git a/src/mesa/drivers/dri/i915/i915_context.h b/src/mesa/drivers/dri/i915/i915_context.h
+index 577a01e..26c23f2 100644
+--- a/src/mesa/drivers/dri/i915/i915_context.h
++++ b/src/mesa/drivers/dri/i915/i915_context.h
+@@ -29,6 +29,7 @@
+ #define I915CONTEXT_INC
+ 
+ #include "intel_context.h"
++#include "i915_reg.h"
+ 
+ #define I915_FALLBACK_TEXTURE		 0x1000
+ #define I915_FALLBACK_COLORMASK		 0x2000
+@@ -117,12 +118,6 @@ enum {
+ #define I915_MAX_CONSTANT      32
+ #define I915_CONSTANT_SIZE     (2+(4*I915_MAX_CONSTANT))
+ 
+-#define I915_MAX_TEX_INDIRECT 4
+-#define I915_MAX_TEX_INSN     32
+-#define I915_MAX_ALU_INSN     64
+-#define I915_MAX_DECL_INSN    27
+-#define I915_MAX_TEMPORARY    16
+-
+ #define I915_MAX_INSN          (I915_MAX_DECL_INSN + \
+ 				I915_MAX_TEX_INSN + \
+ 				I915_MAX_ALU_INSN)
+@@ -255,9 +250,6 @@ struct i915_context
+ 
+    struct i915_fragment_program *current_program;
+ 
+-   drm_intel_bo *current_vb_bo;
+-   unsigned int current_vertex_size;
+-
+    struct i915_hw_state state;
+    uint32_t last_draw_offset;
+    GLuint last_sampler;
+diff --git a/src/mesa/drivers/dri/i915/i915_fragprog.c b/src/mesa/drivers/dri/i915/i915_fragprog.c
+index b67ebb9..4100358 100644
+--- a/src/mesa/drivers/dri/i915/i915_fragprog.c
++++ b/src/mesa/drivers/dri/i915/i915_fragprog.c
+@@ -1412,10 +1412,6 @@ i915ValidateFragmentProgram(struct i915_context *i915)
+                                               intel->vertex_attr_count,
+                                               intel->ViewportMatrix.m, 0);
+ 
+-      assert(intel->prim.current_offset == intel->prim.start_offset);
+-      intel->prim.start_offset = (intel->prim.current_offset + intel->vertex_size-1) / intel->vertex_size * intel->vertex_size;
+-      intel->prim.current_offset = intel->prim.start_offset;
+-
+       intel->vertex_size >>= 2;
+ 
+       i915->state.Ctx[I915_CTXREG_LIS2] = s2;
+diff --git a/src/mesa/drivers/dri/i915/i915_reg.h b/src/mesa/drivers/dri/i915/i915_reg.h
+index 766547a..7f31ff6 100644
+--- a/src/mesa/drivers/dri/i915/i915_reg.h
++++ b/src/mesa/drivers/dri/i915/i915_reg.h
+@@ -361,6 +361,13 @@
+ /* p222 */
+ 
+ 
++#define I915_MAX_TEX_INDIRECT 4
++#define I915_MAX_TEX_INSN     32
++#define I915_MAX_ALU_INSN     64
++#define I915_MAX_DECL_INSN    27
++#define I915_MAX_TEMPORARY    16
++
++
+ /* Each instruction is 3 dwords long, though most don't require all
+  * this space.  Maximum of 123 instructions.  Smaller maxes per insn
+  * type.
+diff --git a/src/mesa/drivers/dri/i915/i915_vtbl.c b/src/mesa/drivers/dri/i915/i915_vtbl.c
+index 9721a1c..fb72099 100644
+--- a/src/mesa/drivers/dri/i915/i915_vtbl.c
++++ b/src/mesa/drivers/dri/i915/i915_vtbl.c
+@@ -683,9 +683,6 @@ i915_new_batch(struct intel_context *intel)
+    i915->state.emitted = 0;
+    i915->last_draw_offset = 0;
+    i915->last_sampler = 0;
+-
+-   i915->current_vb_bo = NULL;
+-   i915->current_vertex_size = 0;
+ }
+ 
+ static void 
+diff --git a/src/mesa/drivers/dri/i915/intel_tris.c b/src/mesa/drivers/dri/i915/intel_tris.c
+index 7bcb72f..2687b25 100644
+--- a/src/mesa/drivers/dri/i915/intel_tris.c
++++ b/src/mesa/drivers/dri/i915/intel_tris.c
+@@ -54,7 +54,6 @@
+ #include "intel_span.h"
+ #include "i830_context.h"
+ #include "i830_reg.h"
+-#include "i915_context.h"
+ 
+ static void intelRenderPrimitive(struct gl_context * ctx, GLenum prim);
+ static void intelRasterPrimitive(struct gl_context * ctx, GLenum rprim,
+@@ -216,7 +215,7 @@ void intel_flush_prim(struct intel_context *intel)
+    offset = intel->prim.start_offset;
+    intel->prim.start_offset = intel->prim.current_offset;
+    if (intel->gen < 3)
+-      intel->prim.current_offset = intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
++      intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
+    intel->prim.flush = NULL;
+ 
+    intel->vtbl.emit_state(intel);
+@@ -241,39 +240,20 @@ void intel_flush_prim(struct intel_context *intel)
+ #endif
+ 
+    if (intel->gen >= 3) {
+-      struct i915_context *i915 = i915_context(&intel->ctx);
+-      unsigned int cmd = 0, len = 0;
+-
+-      if (vb_bo != i915->current_vb_bo) {
+-	 cmd |= I1_LOAD_S(0);
+-	 len++;
+-      }
++      BEGIN_BATCH(5);
++      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
++		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
++      assert((offset & ~S0_VB_OFFSET_MASK) == 0);
++      OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, offset);
++      OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
++		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
+ 
+-      if (intel->vertex_size != i915->current_vertex_size) {
+-	 cmd |= I1_LOAD_S(1);
+-	 len++;
+-      }
+-      if (len)
+-	 len++;
+-
+-      BEGIN_BATCH(2+len);
+-      if (cmd)
+-	 OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | cmd | (len - 2));
+-      if (vb_bo != i915->current_vb_bo) {
+-	 OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, 0);
+-	 i915->current_vb_bo = vb_bo;
+-      }
+-      if (intel->vertex_size != i915->current_vertex_size) {
+-	 OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
+-		   (intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
+-	 i915->current_vertex_size = intel->vertex_size;
+-      }
+       OUT_BATCH(_3DPRIMITIVE |
+ 		PRIM_INDIRECT |
+ 		PRIM_INDIRECT_SEQUENTIAL |
+ 		intel->prim.primitive |
+ 		count);
+-      OUT_BATCH(offset / (intel->vertex_size * 4));
++      OUT_BATCH(0); /* Beginning vertex index */
+       ADVANCE_BATCH();
+    } else {
+       struct i830_context *i830 = i830_context(&intel->ctx);
+-- 
+1.7.4.1
+

@@ -1,0 +1,247 @@
+Name: mesa
+Summary: Mesa graphics libraries
+Version: 7.11~git4056.g0edb40c
+Release: 0
+Group: System/Libraries
+License: MIT
+URL: http://www.mesa3d.org/beta
+Sources:
+    - mesa-%{version}.tar.bz2
+    - mesa-rpmlintrc
+Patches:
+    - 0001-Revert-i915-Emit-a-single-relocation-per-vbo.patch
+SetupOptions: "-q -n mesa-%{version} -b1"
+
+Description: |
+    Mesa is an open-source implementation of the OpenGL specification  -
+    a system for rendering interactive 3D graphics.
+PkgBR:
+    - pkgconfig autoconf automake
+    - expat-devel >= 2.0
+    - python
+    - libxml2-python
+    - bison
+    - flex
+    - makedepend
+    - wayland-devel >= 0.1~git716.gaa7bbb2
+    - wayland-client
+    - wayland-server
+PkgConfigBR:
+    - glproto
+    - dri2proto >= 1.1
+    - xproto
+    - libdrm
+    - xxf86vm
+    - xext
+    - xfixes
+    - xdamage
+    - xi
+    - xmu
+    - libxml-2.0
+    - talloc
+    - libudev >= 160
+Configure: reconfigure
+ConfigOptions:
+    - --disable-glut
+    - --disable-glw
+    - --disable-gl-osmesa
+    - --with-gallium-drivers=
+    - --enable-gallium-llvm=no
+    - --enable-egl
+    - --enable-gles1
+    - --enable-gles2
+    - --enable-shared-glapi
+    - --with-state-trackers=glx,dri
+    - --with-driver=dri
+    - --with-egl-platforms=x11,drm,wayland
+    - --enable-shared-glapi
+    - --with-dri-drivers=i915,i965,swrast
+    - --with-dri-driverdir=%{_libdir}/dri
+Builder: make
+NoFiles: yes
+SubPackages:
+    - Name: dri-drivers-devel
+      Summary: Mesa-based DRI development files
+      Group: Development/Libraries
+      Description: Mesa-based DRI driver development files.
+
+    - Name: dri-i965-driver
+      Summary: Mesa-based DRI drivers
+      Group: Graphics/Display and Graphics Adaptation
+      Description: Mesa-based i965 DRI driver.
+      Provides:
+          - mesa-dri-drivers = %{version}-%{release}
+
+    - Name: dri-i915-driver
+      Summary: Mesa-based DRI drivers
+      Group: Graphics/Display and Graphics Adaptation
+      Description: Mesa-based i915 DRI driver.
+      Provides:
+          - mesa-dri-drivers = %{version}-%{release}
+
+    - Name: dri-swrast-driver
+      Summary: Mesa-based DRI drivers
+      Group: Graphics/Display and Graphics Adaptation
+      Description: Mesa-based swrast DRI driver.
+      Provides:
+          - mesa-dri-drivers = %{version}-%{release}
+
+    - Name: libglapi
+      Summary: Mesa shared gl api library
+      Group: System/Libraries
+      Description: Mesa shared gl api library.
+
+    - Name: libGL
+      Summary: Mesa libGL runtime libraries and DRI drivers
+      Group: System/Libraries
+      Description: Mesa libGL runtime library.
+      Provides:
+          - libGL = %{version}-%{release}
+
+    - Name: libGLESv1
+      Summary: Mesa libGLESv1 runtime libraries
+      Group: System/Libraries
+      Description: Mesa libGLESv1 runtime library.
+      Provides:
+          - libGLESv1 = %{version}-%{release}
+
+    - Name: libGLESv2
+      Summary: Mesa libGLESv2 runtime libraries
+      Group: System/Libraries
+      Description: Mesa libGLESv2 runtime library.
+      Provides:
+          - libGLESv2 = %{version}-%{release}
+
+    - Name: libGLESv2-compat
+      Summary: Mesa libGLESv2 runtime compatibility library
+      Group: System/Libraries
+      Description: Mesa libGLESv2 runtime compatibility library.
+      Requires:
+          - libGLESv2.so.2
+      Provides:
+          - libGLESv2.so
+
+    - Name: libgbm
+      Summary: Mesa generic/graphics buffer manager
+      Group: System/Libraries
+      Description: Mesa generic/graphics buffer manager.
+
+    - Name: libEGL
+      Summary: Mesa libEGL runtime libraries and DRI drivers
+      Group: System/Libraries
+      Description: Mesa libEGL runtime library.
+      Provides:
+          - libEGL = %{version}-%{release}
+
+    - Name: libEGL-compat
+      Summary: Mesa libEGL runtime compatibility library
+      Group: System/Libraries
+      Description: Mesa libEGL runtime compatibility library.
+      Requires:
+          - libEGL.so.1
+      Provides:
+          - libEGL.so
+
+    - Name: libGLU
+      Summary: Mesa libGLU runtime library
+      Group: System/Libraries
+      Description: Mesa libGLU runtime libraries
+
+    - Name: libOSMesa
+      Summary: Mesa offscreen rendering libraries
+      Group: System/Libraries
+      Description: Mesa offscreen rendering libraries-
+
+    - Name: libgbm-devel
+      Summary: Mesa libgbm development package
+      Group: Development/Libraries
+      Description: Mesa libgbm development package.
+      Provides:
+          - libgbm-devel
+      Requires:
+          - mesa-libgbm = %{version}-%{release}
+
+    - Name: libglapi-devel
+      Summary: Mesa libglapi development package
+      Group: System/Libraries
+      Description: Mesa libglapi development package.
+      Provides:
+          - libglapi-devel
+      Requires:
+          - mesa-libglapi = %{version}-%{release}
+
+    - Name: libGL-devel
+      Summary: Mesa libGL development package
+      Group: Development/Libraries
+      Description: Mesa libGL development packages
+      Requires:
+          - mesa-libGL = %{version}-%{release}
+          - libX11-devel
+      Provides:
+          - libGL-devel
+
+    - Name: libGLESv1-devel
+      Summary: Mesa libGLESv1 development package
+      Group: Development/Libraries
+      Description: Mesa libGLESv1 development packages
+      Provides:
+          - libGLESv1-devel
+      Requires:
+          - mesa-libGLESv1 = %{version}-%{release}
+
+    - Name: libGLESv2-devel
+      Summary: Mesa libGLESv2 development package
+      Group: Development/Libraries
+      Description: Mesa libGLESv2 development packages
+      Provides:
+          - libGLESv2-devel
+      Requires:
+          - mesa-libGLESv2 = %{version}-%{release}
+      Obsoletes:
+          - mesa-libGLESv2-compat
+
+    - Name: libEGL-devel
+      Summary: Mesa libEGL development package
+      Group: Development/Libraries
+      Description: Mesa libEGL development packages
+      Provides:
+          - libEGL-devel
+      Requires:
+          - mesa-libEGL = %{version}-%{release}
+      Obsoletes:
+          - mesa-libEGL-compat
+
+    - Name: libGLU-devel
+      Summary: Mesa libGLU development package
+      Group: Development/Libraries
+      Description: Mesa libGLU development packages
+      Requires:
+          - mesa-libGLU = %{version}-%{release}
+          - libGL-devel
+      Provides:
+          - libGLU-devel
+
+    - Name: libOSMesa-devel
+      Summary: Mesa offscreen rendering development package
+      Group: Development/Libraries
+      Description: Mesa offscreen rendering development packages
+      Requires: 
+          - mesa-libOSMesa = %{version}-%{release}
+ 
+    - Name: libwayland-egl
+      Summary: Mesa wayland-egl runtime libraries
+      Group: System/Libraries
+      Description: Mesa libwayland-egl runtime library.
+      Provides:
+          - libwayland-egl = %{version}-%{release}
+
+    - Name: libwayland-egl-devel
+      Summary: Mesa wayland-egl development libraries
+      Group: Development/Libraries
+      Description: Mesa libwayland-egl development library.
+      Requires:
+          - libwayland-egl = %{version}-%{release}
+      Provides:
+          - libwayland-egl-devel
+
+
