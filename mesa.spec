@@ -16,6 +16,7 @@ Source0:    mesa-%{version}.tar.bz2
 Source1:    mesa-rpmlintrc
 Source100:  mesa.yaml
 Patch0:     0001-Revert-i915-Emit-a-single-relocation-per-vbo.patch
+Patch1:     mesa-7.11-git-notimestamping.patch
 BuildRequires:  pkgconfig(glproto)
 BuildRequires:  pkgconfig(dri2proto) >= 1.1
 BuildRequires:  pkgconfig(xproto)
@@ -276,6 +277,8 @@ Mesa libwayland-egl development library.
 
 # 0001-Revert-i915-Emit-a-single-relocation-per-vbo.patch
 %patch0 -p1
+# mesa-7.11-git-notimestamping.patch
+%patch1 -p1
 # >> setup
 # << setup
 

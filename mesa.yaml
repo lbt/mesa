@@ -10,6 +10,7 @@ Sources:
     - mesa-rpmlintrc
 Patches:
     - 0001-Revert-i915-Emit-a-single-relocation-per-vbo.patch
+    - mesa-7.11-git-notimestamping.patch
 SetupOptions: "-q -n mesa-%{version} -b1"
 
 Description: |
@@ -50,7 +51,6 @@ ConfigOptions:
     - --enable-egl
     - --enable-gles1
     - --enable-gles2
-    - --enable-shared-glapi
     - --with-state-trackers=glx,dri
     - --with-driver=dri
     - --with-egl-platforms=x11,drm,wayland

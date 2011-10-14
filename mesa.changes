@@ -1,3 +1,6 @@
+* Fri Oct 14 2011 Carsten Munk <carsten@maemo.org> - 7.11
+- Remove timestamp that caused unneeded rebuilds
+
 * Wed Jul 06 2011 Ander C. de Oliveira <ander.conselvan.de.oliveira@intel.com> - 7.11
 - Updated to 7.11~git4056.g0edb40c
 - Removed libOpenVG since it requires gallium
