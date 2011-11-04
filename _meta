@@ -1,9 +1,0 @@
-<package project="Mer:Trunk:Base" name="mesa">
-  <title/>
-  <description>
-
-  </description>
-  <debuginfo>
-    <disable/>
-  </debuginfo>
-</package>
